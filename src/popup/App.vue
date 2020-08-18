@@ -1,16 +1,20 @@
 <template>
   <div class="popup">
-    <div class="setup-true" v-if="setup_userId">
+    <div class="login-true" v-if="login">
       <h3>
-        You have set up UserId!
+        You are logged in!
       </h3>
+      <a @click="manually" class="btn-manually">Manually</a>
+      <div id="result">{{ result }}</div>
+      <p class="text-help">Default will automatically run every Monday and Sunday</p>
     </div>
-
-    <div class="setup-false" v-if="!setup_userId">
+    <div class="login-false" v-if="!login">
       <h3>
-        You have not set up UserId!
-        <input type="text" v-model="userId" />
+        You are not logged in!
       </h3>
+      <a href="https://goal.sun-asterisk.vn/login/framgia" class="btn-login" target="_blank"
+        >Login via WSM</a
+      >
     </div>
   </div>
 </template>
@@ -19,39 +23,44 @@
 export default {
   data() {
     return {
-      userId: '',
-      setup_userId: false
+      access_token: '',
+      login: false,
+      result: ''
     };
   },
   methods: {
-    async getUserId() {
+    async getAccessToken() {
       let self = this;
-      const getUserIdFromCookies = () =>
+      const getAccessTokenFromCookies = () =>
         new Promise((resolve, reject) => {
-          chrome.cookies.get({ url: 'https://goal.sun-asterisk.vn', name: 'userId' }, function(
-            cookie
-          ) {
-            self.userId = cookie.value;
-            resolve();
-          });
+          chrome.cookies.get(
+            { url: 'https://goal.sun-asterisk.vn', name: 'access_token' },
+            function(cookie) {
+              if (cookie) {
+                self.access_token = cookie.value;
+              }
+
+              resolve();
+            }
+          );
         });
-      await getUserIdFromCookies();
+      await getAccessTokenFromCookies();
     },
-    setUserIdToCookie() {
-      chrome.cookies.set(
-        {
-          url: 'https://goal.sun-asterisk.vn',
-          name: 'userId',
-          value: this.userId
-        },
-        function(cookie) {}
-      );
+    async manually() {
+      let self = this;
+      chrome.runtime.sendMessage({ sendManually: true }, function(response) {
+        self.result = response.result;
+      });
+      console.log(this.result);
+      setTimeout(() => {
+        this.result = '';
+      }, 2000);
     }
   },
   async created() {
-    await this.getUserId();
-    if (this.userId) {
-      this.setup_userId = true;
+    await this.getAccessToken();
+    if (this.access_token) {
+      this.login = true;
     }
   }
 };
@@ -65,8 +74,59 @@ body {
   min-width: 15rem;
 }
 
-.setup-true > h3,
-.setup-false > h3 {
+.login-true,
+.login-false {
   text-align: center;
+}
+
+.btn-manually {
+  display: inline-block;
+  text-align: center;
+  padding: 1rem 1rem;
+  margin: 1rem 0;
+  background-color: #058be8;
+  border-color: #058be8;
+  color: #fff;
+  font-size: 1.2rem;
+  box-shadow: 0 5px 10px 2px rgba(52, 191, 163, 0.36);
+  border-radius: 60px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.btn-manually:hover {
+  color: #fff;
+  background-color: #0a71bb;
+  border-color: #0a71bb;
+}
+
+#result {
+  color: seagreen;
+}
+
+.btn-login {
+  display: inline-block;
+  text-align: center;
+  padding: 1rem 1.5rem;
+  margin: 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #fff;
+  box-shadow: 0 5px 10px 2px rgba(52, 191, 163, 0.19);
+  font-weight: 400;
+  border-radius: 60px;
+  background-color: #0eb997;
+  border-color: #34bfa3;
+  text-decoration: none;
+}
+
+.btn-login:hover {
+  color: #fff;
+  background-color: #2ca189;
+  border-color: #299781;
+}
+
+.text-help {
+  color: #656464;
 }
 </style>
