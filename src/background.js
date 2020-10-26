@@ -1,7 +1,7 @@
 global.browser = require('webextension-polyfill');
 
 function getCookie(domain, name, callback) {
-  chrome.cookies.get({ url: domain, name: name }, function(cookie) {
+  chrome.cookies.get({ url: domain, name: name }, function (cookie) {
     if (callback) {
       callback(cookie.value);
     }
@@ -34,7 +34,7 @@ async function getIdRemainUnchanged(userId) {
   var csrf_token = doc.querySelector('meta[name="csrf-token"]').content;
 
   var arrayId = [];
-  remainsDOM.forEach((dom) => {
+  remainsDOM.forEach(dom => {
     if (dom.classList.value !== 'remain-unchanged top-10 float-left') {
       var id = dom.id.substring(10, remainsDOM[0].id.length);
       arrayId.push(parseInt(id));
@@ -74,7 +74,7 @@ async function senRequest() {
   let access_token = '';
   const getAccessToken = () =>
     new Promise((resolve, reject) => {
-      getCookie('https://goal.sun-asterisk.vn', 'access_token', function(e) {
+      getCookie('https://goal.sun-asterisk.vn', 'access_token', function (e) {
         access_token = e;
         resolve();
       });
@@ -82,7 +82,7 @@ async function senRequest() {
   await getAccessToken();
   let userId = await getUserId();
   let { arrayId, csrf_token } = await getIdRemainUnchanged(userId);
-  arrayId.forEach((idRemain) => {
+  arrayId.forEach(idRemain => {
     fetch(`https://goal.sun-asterisk.vn/api/v1/objectives/${idRemain}/remain_unchanged`, {
       headers: {
         'accept': '*/*',
@@ -106,7 +106,8 @@ async function senRequest() {
 
 function auto() {
   var day = new Date();
-  if (day.getDay() === 1 || day.getDay() === 0) {
+  console.log(day.getDay());
+  if (day.getDay() === 0 || day.getDay() === 1 || day.getDay() === 5) {
     senRequest();
   }
 }
@@ -117,7 +118,7 @@ function manually() {
 
 auto();
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.sendManually) {
     manually();
     sendResponse({ result: 'success!' });
